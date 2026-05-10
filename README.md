@@ -1,6 +1,6 @@
 # Qwen Chat
 
-A local web chat app for `qwen2.5:7b` running through Ollama in Docker.
+A local web chat app for Qwen models running through Ollama in Docker.
 
 ## Run Ollama
 
@@ -19,10 +19,10 @@ docker exec -it ollama ollama pull qwen2.5:7b
 
 ## Start the chat app with Docker
 
-This does not require Node.js on your laptop.
+Use this when Ollama is already running separately on your machine. This does not require Node.js on your laptop.
 
 ```powershell
-docker compose up --build
+docker compose -f docker-compose.qwenchat.yml up --build
 ```
 
 Open:
@@ -34,13 +34,13 @@ http://localhost:3000
 To run it in the background:
 
 ```powershell
-docker compose up --build -d
+docker compose -f docker-compose.qwenchat.yml up --build -d
 ```
 
 To stop it:
 
 ```powershell
-docker compose down
+docker compose -f docker-compose.qwenchat.yml down
 ```
 
 ## Start Ollama and chat together
@@ -48,23 +48,53 @@ docker compose down
 Use this if you want Docker Compose to run Ollama, pull the models, and then start the chat app.
 
 ```powershell
-docker compose -f docker-compose.ollama.yml up --build
+docker compose -f docker-compose.qwenchat-stack.yml up --build
 ```
 
-This Compose file gives Ollama GPU access with:
+### GPU and load limits
+
+The full-stack Compose file starts Ollama with GPU access:
 
 ```yaml
 gpus: all
 ```
 
-It also limits Ollama concurrency to reduce CPU/GPU pressure:
+This is the Compose equivalent of:
+
+```powershell
+docker run --gpus=all ollama/ollama
+```
+
+It also applies these Ollama settings:
 
 ```yaml
 OLLAMA_NUM_PARALLEL: "1"
 OLLAMA_MAX_LOADED_MODELS: "1"
 ```
 
-That works when Docker can see your NVIDIA GPU. If Docker reports a GPU-related error, update your NVIDIA driver / Docker Desktop GPU support, or remove `gpus: all` from `docker-compose.ollama.yml` to run CPU-only.
+What they do:
+
+- `OLLAMA_NUM_PARALLEL=1` lets Ollama process one generation request at a time.
+- `OLLAMA_MAX_LOADED_MODELS=1` keeps only one model loaded at once.
+
+These settings reduce CPU/GPU pressure and help prevent the machine from getting overloaded when multiple chats or models are used. They do not force CPU-only mode; with `gpus: all`, Ollama can still use your NVIDIA GPU.
+
+GPU support works when Docker can see your NVIDIA GPU. If Docker reports a GPU-related error, update your NVIDIA driver / Docker Desktop GPU support, or remove `gpus: all` from `docker-compose.qwenchat-stack.yml` to run CPU-only.
+
+The Ollama service is configured like this:
+
+```yaml
+ollama:
+  image: ollama/ollama:latest
+  gpus: all
+  environment:
+    OLLAMA_NUM_PARALLEL: "1"
+    OLLAMA_MAX_LOADED_MODELS: "1"
+    NVIDIA_VISIBLE_DEVICES: all
+    NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  volumes:
+    - ollama-data:/root/.ollama
+```
 
 The first run will take a while because it downloads:
 
@@ -76,62 +106,22 @@ qwen2.5-coder:3b
 Open:
 
 ```text
-http://localhost:8080
-```
-
-From your phone on Tailscale:
-
-```text
-http://<your-laptop-tailscale-ip>:8080
+http://localhost:3000
 ```
 
 Run it in the background:
 
 ```powershell
-docker compose -f docker-compose.ollama.yml up --build -d
+docker compose -f docker-compose.qwenchat-stack.yml up --build -d
 ```
 
 Stop the full stack:
 
 ```powershell
-docker compose -f docker-compose.ollama.yml down
+docker compose -f docker-compose.qwenchat-stack.yml down
 ```
 
 The downloaded models are kept in the `ollama-data` Docker volume.
-
-If you changed `docker-compose.yml` to publish another port such as `8080`, use that port instead:
-
-```text
-http://localhost:8080
-```
-
-## Open from a phone with Tailscale
-
-Use your laptop's Tailscale IP or MagicDNS name with the published app port:
-
-```text
-http://<your-laptop-tailscale-ip>:3000
-```
-
-or, if your Compose file publishes `8080`:
-
-```text
-http://<your-laptop-tailscale-ip>:8080
-```
-
-The phone does not need direct access to Ollama. It only needs access to the chat app. The chat app container talks to Ollama through:
-
-```text
-http://host.docker.internal:11434
-```
-
-From your phone, open this diagnostic URL to check whether the chat app can reach Ollama:
-
-```text
-http://<your-laptop-tailscale-ip>:3000/api/diagnostics
-```
-
-Use port `8080` in that URL if your Compose file publishes `8080`.
 
 ## Start the chat app with Node
 
@@ -155,13 +145,21 @@ OLLAMA_MODEL=qwen2.5:7b
 PORT=3000
 ```
 
-Inside Docker Compose, `OLLAMA_HOST` is set to:
+In the chat-only Docker Compose file, `OLLAMA_HOST` is set to:
 
 ```text
 http://host.docker.internal:11434
 ```
 
 That lets the chat container reach Ollama exposed on your laptop.
+
+In the full-stack Docker Compose file, `OLLAMA_HOST` is set to:
+
+```text
+http://ollama:11434
+```
+
+That lets the chat container reach the Ollama service inside the same Compose network.
 
 Override them when needed:
 
