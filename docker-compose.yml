@@ -1,0 +1,13 @@
+services:
+  qwen-chat:
+    build: .
+    container_name: qwen-chat
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      OLLAMA_HOST: "http://host.docker.internal:11434"
+      OLLAMA_MODEL: "qwen2.5:3b"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

@@ -1,0 +1,51 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: qwen-ollama
+    gpus: all
+    environment:
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  ollama-models:
+    image: ollama/ollama:latest
+    container_name: qwen-ollama-models
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama pull qwen2.5:3b &&
+       ollama pull qwen2.5-coder:3b"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  qwen-chat:
+    build: .
+    container_name: qwen-chat-stack
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      OLLAMA_HOST: "http://ollama:11434"
+      OLLAMA_MODEL: "qwen2.5:3b"
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-models:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
