@@ -1,4 +1,5 @@
-const STORAGE_KEY = "qwen-chat-sessions-v1";
+const STORAGE_KEY = "ollama-chat-sessions-v1";
+const LEGACY_STORAGE_KEY = "qwen-chat-sessions-v1";
 const APP_VERSION = "20260510-3";
 
 const messagesEl = document.querySelector("#messages");
@@ -246,7 +247,8 @@ function getActiveSession() {
 
 function loadSessions() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY) || "[]";
+    const parsed = JSON.parse(stored);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];

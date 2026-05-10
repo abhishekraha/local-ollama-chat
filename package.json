@@ -1,8 +1,8 @@
 {
-  "name": "chat-ollama-qwen",
+  "name": "ollama-chat",
   "version": "1.0.0",
   "private": true,
-  "description": "A local web chat app for Ollama models such as qwen2.5:7b.",
+  "description": "A local web chat app for Ollama models.",
   "type": "module",
   "scripts": {
     "start": "node server.js"

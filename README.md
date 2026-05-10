@@ -1,20 +1,20 @@
-# Qwen Chat
+# Ollama Chat
 
-A local web chat app for Qwen models running through Ollama in Docker.
+A local web chat app for any model running through Ollama in Docker.
 
 ## Run Ollama
 
-Expose Ollama on port `11434` from Docker, then pull the model:
+Expose Ollama on port `11434` from Docker, then pull whichever model you want to use:
 
 ```powershell
-docker exec -it <ollama-container-name> ollama pull qwen2.5:7b
+docker exec -it <ollama-container-name> ollama pull <model-name>
 ```
 
 If you are starting a fresh Ollama container:
 
 ```powershell
 docker run -d --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
-docker exec -it ollama ollama pull qwen2.5:7b
+docker exec -it ollama ollama pull qwen2.5:3b
 ```
 
 ## Start the chat app with Docker
@@ -22,7 +22,7 @@ docker exec -it ollama ollama pull qwen2.5:7b
 Use this when Ollama is already running separately on your machine. This does not require Node.js on your laptop.
 
 ```powershell
-docker compose -f docker-compose.qwenchat.yml up --build
+docker compose -f docker-compose.ollama-chat.yml up --build
 ```
 
 Open:
@@ -34,13 +34,13 @@ http://localhost:3000
 To run it in the background:
 
 ```powershell
-docker compose -f docker-compose.qwenchat.yml up --build -d
+docker compose -f docker-compose.ollama-chat.yml up --build -d
 ```
 
 To stop it:
 
 ```powershell
-docker compose -f docker-compose.qwenchat.yml down
+docker compose -f docker-compose.ollama-chat.yml down
 ```
 
 ## Start Ollama and chat together
@@ -48,7 +48,7 @@ docker compose -f docker-compose.qwenchat.yml down
 Use this if you want Docker Compose to run Ollama, pull the models, and then start the chat app.
 
 ```powershell
-docker compose -f docker-compose.qwenchat-stack.yml up --build
+docker compose -f docker-compose.ollama-chat-stack.yml up --build
 ```
 
 ### GPU and load limits
@@ -79,7 +79,7 @@ What they do:
 
 These settings reduce CPU/GPU pressure and help prevent the machine from getting overloaded when multiple chats or models are used. They do not force CPU-only mode; with `gpus: all`, Ollama can still use your NVIDIA GPU.
 
-GPU support works when Docker can see your NVIDIA GPU. If Docker reports a GPU-related error, update your NVIDIA driver / Docker Desktop GPU support, or remove `gpus: all` from `docker-compose.qwenchat-stack.yml` to run CPU-only.
+GPU support works when Docker can see your NVIDIA GPU. If Docker reports a GPU-related error, update your NVIDIA driver / Docker Desktop GPU support, or remove `gpus: all` from `docker-compose.ollama-chat-stack.yml` to run CPU-only.
 
 The Ollama service is configured like this:
 
@@ -96,7 +96,7 @@ ollama:
     - ollama-data:/root/.ollama
 ```
 
-The first run will take a while because it downloads:
+The first run will take a while because this sample stack downloads:
 
 ```text
 qwen2.5:3b
@@ -112,13 +112,13 @@ http://localhost:3000
 Run it in the background:
 
 ```powershell
-docker compose -f docker-compose.qwenchat-stack.yml up --build -d
+docker compose -f docker-compose.ollama-chat-stack.yml up --build -d
 ```
 
 Stop the full stack:
 
 ```powershell
-docker compose -f docker-compose.qwenchat-stack.yml down
+docker compose -f docker-compose.ollama-chat-stack.yml down
 ```
 
 The downloaded models are kept in the `ollama-data` Docker volume.

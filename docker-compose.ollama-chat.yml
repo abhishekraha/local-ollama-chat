@@ -1,7 +1,7 @@
 services:
-  qwen-chat:
+  ollama-chat:
     build: .
-    container_name: qwen-chat
+    container_name: ollama-chat
     ports:
       - "3000:3000"
     environment:
