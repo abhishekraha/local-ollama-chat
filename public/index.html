@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Ollama Chat</title>
-    <link rel="stylesheet" href="/styles.css?v=20260511-4" />
+    <link rel="stylesheet" href="/styles.css?v=20260511-6" />
   </head>
   <body>
     <div class="app-shell">
@@ -26,9 +26,12 @@
 
       <main class="chat-area">
         <header class="topbar">
-          <div>
-            <h1>Chat</h1>
-            <p>Local models through your Docker Ollama instance</p>
+          <div class="title-row">
+            <div>
+              <h1>Chat</h1>
+              <p>Local models through your Docker Ollama instance</p>
+            </div>
+            <button class="mobile-new-chat" id="mobileNewChatButton" type="button" aria-label="New chat">+</button>
           </div>
           <div class="settings">
             <div class="top-status" id="topStatus">
@@ -49,6 +52,7 @@
         </header>
 
         <section class="messages" id="messages" aria-live="polite"></section>
+        <button class="scroll-bottom" id="scrollBottomButton" type="button" aria-label="Scroll to bottom" hidden>↓</button>
 
         <form class="composer" id="composer">
           <textarea
@@ -78,6 +82,6 @@
       </div>
     </template>
 
-    <script src="/app.js?v=20260511-4" type="module"></script>
+    <script src="/app.js?v=20260511-6" type="module"></script>
   </body>
 </html>

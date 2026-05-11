@@ -1,6 +1,6 @@
 const STORAGE_KEY = "ollama-chat-sessions-v1";
 const LEGACY_STORAGE_KEY = "qwen-chat-sessions-v1";
-const APP_VERSION = "20260511-4";
+const APP_VERSION = "20260511-6";
 const MODEL_REFRESH_MS = 5000;
 const FALLBACK_MODEL = "deepseek-coder:6.7b";
 
@@ -13,6 +13,8 @@ const modelSelect = document.querySelector("#modelSelect");
 const temperatureInput = document.querySelector("#temperatureInput");
 const sessionsList = document.querySelector("#sessionsList");
 const newChatButton = document.querySelector("#newChatButton");
+const mobileNewChatButton = document.querySelector("#mobileNewChatButton");
+const scrollBottomButton = document.querySelector("#scrollBottomButton");
 const statusDot = document.querySelector("#statusDot");
 const statusText = document.querySelector("#statusText");
 const topStatusDot = document.querySelector("#topStatusDot");
@@ -40,14 +42,20 @@ async function init() {
   promptInput.addEventListener("input", resizePrompt);
   promptInput.addEventListener("keydown", handlePromptKeydown);
   stopButton.addEventListener("click", stopGeneration);
-  newChatButton.addEventListener("click", () => {
-    activeSessionId = createSession().id;
-    saveSessions();
-    renderSessions();
-    renderMessages();
-    promptInput.focus();
-  });
+  newChatButton?.addEventListener("click", startNewChat);
+  mobileNewChatButton?.addEventListener("click", startNewChat);
+  scrollBottomButton?.addEventListener("click", () => scrollToBottom());
+  messagesEl.addEventListener("scroll", updateScrollBottomButton, { passive: true });
+  updateScrollBottomButton();
 
+}
+
+function startNewChat() {
+  activeSessionId = createSession().id;
+  saveSessions();
+  renderSessions();
+  renderMessages();
+  promptInput.focus();
 }
 
 async function loadModels() {
@@ -176,6 +184,7 @@ function resizePrompt() {
 }
 
 function renderMessages(options = {}) {
+  const shouldStick = options.stickToBottom || isNearBottom(messagesEl);
   const session = getActiveSession();
   messagesEl.innerHTML = "";
   const inner = document.createElement("div");
@@ -198,9 +207,22 @@ function renderMessages(options = {}) {
 
   messagesEl.append(inner);
 
-  if (options.stickToBottom || isNearBottom(messagesEl)) {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
+  if (shouldStick) scrollToBottom({ behavior: "auto" });
+  updateScrollBottomButton();
+}
+
+function scrollToBottom(options = {}) {
+  messagesEl.scrollTo({
+    top: messagesEl.scrollHeight,
+    behavior: options.behavior || "smooth"
+  });
+  updateScrollBottomButton();
+}
+
+function updateScrollBottomButton() {
+  if (!scrollBottomButton) return;
+  const session = getActiveSession();
+  scrollBottomButton.hidden = session.messages.length === 0 || isNearBottom(messagesEl);
 }
 
 function renderMessage(message) {

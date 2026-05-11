@@ -37,11 +37,6 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: >
       "ollama pull deepseek-coder:6.7b &&
-       ollama list | tail -n +2 | while read -r model _; do
-         if [ \"$$model\" != \"deepseek-coder:6.7b\" ]; then
-           ollama rm \"$$model\";
-         fi;
-       done &&
        ollama run deepseek-coder:6.7b 'Reply with OK only.'"
     depends_on:
       ollama:

@@ -156,6 +156,7 @@ button {
 
 .chat-area {
   display: grid;
+  position: relative;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
   min-height: 0;
@@ -178,6 +179,30 @@ button {
 .topbar h1 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-new-chat {
+  display: none;
+  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #06110d;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mobile-new-chat:hover {
+  background: var(--accent-strong);
 }
 
 .topbar p {
@@ -382,6 +407,32 @@ button {
   box-shadow: var(--shadow);
 }
 
+.scroll-bottom {
+  position: absolute;
+  right: max(1.5rem, calc((100% - 920px) / 2));
+  bottom: 6.25rem;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(24, 26, 31, 0.96);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.scroll-bottom:hover {
+  border-color: rgba(79, 176, 143, 0.72);
+}
+
+.scroll-bottom[hidden] {
+  display: none;
+}
+
 .composer textarea {
   max-height: 12rem;
   min-height: 2.6rem;
@@ -438,6 +489,11 @@ button {
     font-size: 1.1rem;
   }
 
+  .mobile-new-chat {
+    display: inline-grid;
+    place-items: center;
+  }
+
   .topbar p {
     font-size: 0.82rem;
   }
@@ -474,6 +530,11 @@ button {
     width: calc(100% - 1rem);
     grid-template-columns: 1fr;
     margin-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+
+  .scroll-bottom {
+    right: 1rem;
+    bottom: calc(7.5rem + env(safe-area-inset-bottom));
   }
 
   .composer-actions {
