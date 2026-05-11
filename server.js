@@ -71,10 +71,17 @@ async function proxyChat(req, res) {
     return;
   }
 
+  console.log(`[${new Date().toISOString()}] Incoming chat request: ${JSON.stringify(body)}`);
+
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (messages.length === 0) {
     sendJson(res, 400, { error: "At least one message is required." });
     return;
+  }
+
+  const model = body.model || defaultModel;
+  if (body.model && body.model !== defaultModel) {
+    console.log(`[${new Date().toISOString()}] Model changed to: ${body.model}`);
   }
 
   const controller = new AbortController();
@@ -83,20 +90,23 @@ async function proxyChat(req, res) {
     if (!res.writableEnded) controller.abort();
   });
 
+  const outgoingBody = {
+    model,
+    messages,
+    stream: true,
+    options: {
+      temperature: Number(body.temperature ?? 0.7),
+      top_p: Number(body.top_p ?? 0.9),
+      num_ctx: Number(body.num_ctx ?? 8192)
+    }
+  };
+  console.log(`[${new Date().toISOString()}] Outgoing to Ollama: ${JSON.stringify(outgoingBody)}`);
+
   try {
     const upstream = await fetch(`${ollamaHost}/api/chat`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        model: body.model || defaultModel,
-        messages,
-        stream: true,
-        options: {
-          temperature: Number(body.temperature ?? 0.7),
-          top_p: Number(body.top_p ?? 0.9),
-          num_ctx: Number(body.num_ctx ?? 8192)
-        }
-      }),
+      body: JSON.stringify(outgoingBody),
       signal: controller.signal
     });
 
@@ -153,6 +163,7 @@ async function proxyChat(req, res) {
 }
 
 async function listModels(res) {
+  console.log(`[${new Date().toISOString()}] Fetching models from Ollama: ${ollamaHost}/api/tags`);
   try {
     const response = await fetch(`${ollamaHost}/api/tags`);
     if (!response.ok) throw new Error(response.statusText);
@@ -209,6 +220,8 @@ async function diagnose(res) {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
+  const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${clientIP}`);
 
   if (req.method === "GET" && url.pathname === "/api/tags") {
     await listModels(res);

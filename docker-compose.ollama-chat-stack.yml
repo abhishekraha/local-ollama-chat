@@ -7,8 +7,8 @@ services:
     environment:
       PORT: "3000"
       OLLAMA_HOST: "http://ollama:11434"
-      OLLAMA_MODEL: qwen2.5-coder:7b"
-      OLLAMA_MODELS: "qwen2.5-coder:7b"
+      OLLAMA_MODEL: qwen2.5-coder:7b
+      OLLAMA_MODELS: "qwen2.5-coder:7b,qwen2.5:7b"
     restart: unless-stopped
   ollama:
     image: ollama/ollama:latest
