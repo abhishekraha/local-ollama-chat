@@ -1,6 +1,8 @@
 const STORAGE_KEY = "ollama-chat-sessions-v1";
 const LEGACY_STORAGE_KEY = "qwen-chat-sessions-v1";
-const APP_VERSION = "20260510-3";
+const APP_VERSION = "20260511-4";
+const MODEL_REFRESH_MS = 5000;
+const FALLBACK_MODEL = "deepseek-coder:6.7b";
 
 const messagesEl = document.querySelector("#messages");
 const promptInput = document.querySelector("#promptInput");
@@ -32,6 +34,7 @@ async function init() {
   renderSessions();
   renderMessages();
   await loadModels();
+  setInterval(loadModels, MODEL_REFRESH_MS);
 
   composer.addEventListener("submit", handleSubmit);
   promptInput.addEventListener("input", resizePrompt);
@@ -51,20 +54,22 @@ async function loadModels() {
   try {
     const response = await fetch("/api/tags");
     const data = await response.json();
+    const currentModel = modelSelect.value;
     modelSelect.innerHTML = "";
-    const names = data.models?.length ? data.models : [data.defaultModel || "qwen2.5:7b"];
+    const names = data.models?.length ? data.models : [data.defaultModel || FALLBACK_MODEL];
 
     for (const name of names) {
       const option = document.createElement("option");
       option.value = name;
       option.textContent = name;
-      option.selected = name === (data.defaultModel || "qwen2.5:7b");
+      option.selected = name === currentModel || (!currentModel && name === (data.defaultModel || FALLBACK_MODEL));
       modelSelect.append(option);
     }
 
-    setConnectionStatus(data.offline ? "offline" : "online", data.offline ? "Ollama not reachable" : "Ollama connected");
+    modelSelect.disabled = Boolean(data.offline) || Boolean(abortController);
+    setConnectionStatus(data.offline ? "waiting" : "online", data.offline ? "Waiting for Ollama" : "Ollama connected");
   } catch {
-    setConnectionStatus("offline", "Server offline");
+    setConnectionStatus("waiting", "Waiting for Ollama");
   }
 }
 
@@ -97,7 +102,8 @@ async function generateAssistantReply(session) {
   abortController = new AbortController();
   setBusy(true);
 
-  const assistantMessage = { role: "assistant", content: "" };
+  const selectedModel = modelSelect.value || FALLBACK_MODEL;
+  const assistantMessage = { role: "assistant", content: "", model: selectedModel };
   session.messages.push(assistantMessage);
   renderMessages();
 
@@ -106,9 +112,9 @@ async function generateAssistantReply(session) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        model: modelSelect.value || "qwen2.5:7b",
+        model: selectedModel,
         temperature: temperatureInput.value,
-        messages: session.messages
+        messages: session.messages.map(({ role, content }) => ({ role, content }))
       }),
       signal: abortController.signal
     });
@@ -154,6 +160,7 @@ function setBusy(isBusy) {
   sendButton.disabled = isBusy;
   stopButton.hidden = !isBusy;
   promptInput.disabled = isBusy;
+  modelSelect.disabled = isBusy;
 }
 
 function handlePromptKeydown(event) {
@@ -206,7 +213,17 @@ function renderMessage(message) {
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
-  bubble.innerHTML = renderMarkdown(message.content || "Thinking...");
+  if (message.role === "assistant") {
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    meta.textContent = message.model || "unknown";
+    bubble.append(meta);
+  }
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+  content.innerHTML = renderMarkdown(message.content || "Thinking...");
+  bubble.append(content);
 
   wrapper.append(avatar, bubble);
   return wrapper;

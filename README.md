@@ -14,7 +14,7 @@ If you are starting a fresh Ollama container:
 
 ```powershell
 docker run -d --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
-docker exec -it ollama ollama pull qwen2.5:3b
+docker exec -it ollama ollama pull deepseek-coder:6.7b
 ```
 
 ## Start the chat app with Docker
@@ -45,7 +45,7 @@ docker compose -f docker-compose.ollama-chat.yml down
 
 ## Start Ollama and chat together
 
-Use this if you want Docker Compose to run Ollama, pull the models, and then start the chat app.
+Use this if you want Docker Compose to run Ollama, pull the models, pre-warm the default model, and run the chat app.
 
 ```powershell
 docker compose -f docker-compose.ollama-chat-stack.yml up --build
@@ -87,6 +87,7 @@ The Ollama service is configured like this:
 ollama:
   image: ollama/ollama:latest
   gpus: all
+  mem_limit: 5632m
   environment:
     OLLAMA_NUM_PARALLEL: "1"
     OLLAMA_MAX_LOADED_MODELS: "1"
@@ -96,18 +97,31 @@ ollama:
     - ollama-data:/root/.ollama
 ```
 
+`mem_limit: 5632m` gives the Ollama container about 5.5 GiB of memory. Docker Desktop still needs enough memory assigned to its Linux engine for that limit to be usable.
+
 The first run will take a while because this sample stack downloads:
 
 ```text
-qwen2.5:3b
-qwen2.5-coder:3b
+deepseek-coder:6.7b
 ```
+
+The setup job also removes any other installed Ollama models from the stack volume so only `deepseek-coder:6.7b` remains.
+
+After the pulls finish, the setup container also runs:
+
+```powershell
+ollama run deepseek-coder:6.7b "Reply with OK only."
+```
+
+That pre-warms the default model before the chat app starts. Because `OLLAMA_MAX_LOADED_MODELS=1`, only the most recently used model is kept loaded, so the stack warms `deepseek-coder:6.7b` last.
 
 Open:
 
 ```text
 http://localhost:3000
 ```
+
+The chat app starts independently of Ollama and the model download job. If Ollama is still starting or models are still being pulled, the UI stays open and shows `Waiting for Ollama`; it refreshes the model list automatically once Ollama is reachable.
 
 Run it in the background:
 
@@ -141,9 +155,17 @@ The app defaults to:
 
 ```text
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b
+OLLAMA_MODEL=deepseek-coder:6.7b
 PORT=3000
 ```
+
+To limit which installed Ollama models appear in the UI dropdown, set `OLLAMA_MODELS` to a comma-separated allow-list:
+
+```text
+OLLAMA_MODELS=deepseek-coder:6.7b
+```
+
+This only filters the UI list. It does not delete models from the Ollama volume.
 
 In the chat-only Docker Compose file, `OLLAMA_HOST` is set to:
 
@@ -165,7 +187,7 @@ Override them when needed:
 
 ```powershell
 $env:OLLAMA_HOST="http://localhost:11434"
-$env:OLLAMA_MODEL="qwen2.5:7b"
+$env:OLLAMA_MODEL="deepseek-coder:6.7b"
 $env:PORT="3000"
 node server.js
 ```

@@ -1,8 +1,20 @@
 services:
+  ollama-chat:
+    build: .
+    container_name: ollama-chat
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      OLLAMA_HOST: "http://ollama:11434"
+      OLLAMA_MODEL: "deepseek-coder:6.7b"
+      OLLAMA_MODELS: "deepseek-coder:6.7b"
+    restart: unless-stopped
   ollama:
     image: ollama/ollama:latest
     container_name: ollama-chat-ollama
     gpus: all
+    mem_limit: 5632m
     environment:
       OLLAMA_NUM_PARALLEL: "1"
       OLLAMA_MAX_LOADED_MODELS: "1"
@@ -24,28 +36,19 @@ services:
       OLLAMA_HOST: http://ollama:11434
     entrypoint: ["/bin/sh", "-c"]
     command: >
-      "ollama pull qwen2.5:3b &&
-       ollama pull qwen2.5-coder:3b"
+      "ollama pull deepseek-coder:6.7b &&
+       ollama list | tail -n +2 | while read -r model _; do
+         if [ \"$$model\" != \"deepseek-coder:6.7b\" ]; then
+           ollama rm \"$$model\";
+         fi;
+       done &&
+       ollama run deepseek-coder:6.7b 'Reply with OK only.'"
     depends_on:
       ollama:
         condition: service_healthy
     restart: "no"
 
-  ollama-chat:
-    build: .
-    container_name: ollama-chat
-    ports:
-      - "3000:3000"
-    environment:
-      PORT: "3000"
-      OLLAMA_HOST: "http://ollama:11434"
-      OLLAMA_MODEL: "qwen2.5:3b"
-    depends_on:
-      ollama:
-        condition: service_healthy
-      ollama-models:
-        condition: service_completed_successfully
-    restart: unless-stopped
+
 
 volumes:
   ollama-data:

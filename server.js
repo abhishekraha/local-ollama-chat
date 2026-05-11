@@ -7,7 +7,11 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(__dirname, "public");
 const port = Number(process.env.PORT || 3000);
 const ollamaHost = (process.env.OLLAMA_HOST || "http://localhost:11434").replace(/\/$/, "");
-const defaultModel = process.env.OLLAMA_MODEL || "qwen2.5:7b";
+const defaultModel = process.env.OLLAMA_MODEL || "deepseek-coder:6.7b";
+const allowedModels = (process.env.OLLAMA_MODELS || "")
+  .split(",")
+  .map((model) => model.trim())
+  .filter(Boolean);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -140,7 +144,7 @@ async function proxyChat(req, res) {
     if (!res.headersSent) {
       sendJson(res, 502, {
         error: "Could not reach Ollama.",
-        detail: `Tried ${ollamaHost}. Make sure Docker exposes Ollama on port 11434 and qwen2.5:7b is pulled.`
+        detail: `Tried ${ollamaHost}. Make sure Docker exposes Ollama on port 11434 and ${defaultModel} is pulled.`
       });
     } else {
       res.end();
@@ -153,9 +157,15 @@ async function listModels(res) {
     const response = await fetch(`${ollamaHost}/api/tags`);
     if (!response.ok) throw new Error(response.statusText);
     const data = await response.json();
+    const installedModels = (data.models || []).map((model) => model.name);
+    const visibleModels = allowedModels.length
+      ? allowedModels.filter((model) => installedModels.includes(model))
+      : installedModels;
+
     sendJson(res, 200, {
       defaultModel,
-      models: (data.models || []).map((model) => model.name)
+      models: visibleModels.length ? visibleModels : [defaultModel],
+      installedModels
     });
   } catch {
     sendJson(res, 200, { defaultModel, models: [defaultModel], offline: true });
@@ -184,6 +194,9 @@ async function diagnose(res) {
     const data = await response.json();
     result.ollama.reachable = true;
     result.ollama.models = (data.models || []).map((model) => model.name);
+    result.visibleModels = allowedModels.length
+      ? allowedModels.filter((model) => result.ollama.models.includes(model))
+      : result.ollama.models;
     result.ollama.hasDefaultModel = result.ollama.models.includes(defaultModel);
   } catch (error) {
     result.ok = false;
@@ -229,4 +242,5 @@ server.listen(port, () => {
   console.log(`Chat app: http://localhost:${port}`);
   console.log(`Ollama:   ${ollamaHost}`);
   console.log(`Model:    ${defaultModel}`);
+  if (allowedModels.length) console.log(`Visible:  ${allowedModels.join(", ")}`);
 });

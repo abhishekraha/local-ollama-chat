@@ -7,7 +7,9 @@ services:
     environment:
       PORT: "3000"
       OLLAMA_HOST: "http://host.docker.internal:11434"
-      OLLAMA_MODEL: "qwen2.5:3b"
+      OLLAMA_MODEL: "deepseek-coder:6.7b"
+      # Optional: comma-separated allow-list for the UI model dropdown.
+      # OLLAMA_MODELS: "deepseek-coder:6.7b"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

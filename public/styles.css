@@ -20,6 +20,9 @@
 body {
   margin: 0;
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(79, 176, 143, 0.12), transparent 30rem),
     var(--bg);
@@ -42,6 +45,8 @@ button {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
   height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -137,6 +142,10 @@ button {
   background: #e6aa45;
 }
 
+.status-dot.waiting {
+  background: #e6aa45;
+}
+
 .status-dot.online {
   background: var(--accent);
 }
@@ -149,10 +158,14 @@ button {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .topbar {
   display: flex;
+  position: relative;
+  z-index: 2;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
@@ -218,7 +231,10 @@ button {
 
 .messages {
   overflow-y: auto;
+  min-height: 0;
   padding: 1.5rem;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .messages-inner {
@@ -256,6 +272,7 @@ button {
 }
 
 .bubble {
+  position: relative;
   min-width: 0;
   padding: 0.9rem 1rem;
   border: 1px solid var(--line);
@@ -263,6 +280,23 @@ button {
   background: rgba(24, 26, 31, 0.72);
   box-shadow: var(--shadow);
   line-height: 1.58;
+}
+
+.message-meta {
+  float: right;
+  max-width: min(70%, 18rem);
+  margin: 0 0 0.35rem 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid rgba(167, 175, 189, 0.22);
+  border-radius: 999px;
+  color: rgba(167, 175, 189, 0.8);
+  background: rgba(16, 17, 20, 0.48);
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .message.user .bubble {
@@ -335,6 +369,8 @@ button {
 
 .composer {
   display: grid;
+  position: relative;
+  z-index: 2;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   width: min(920px, calc(100% - 3rem));
@@ -383,6 +419,8 @@ button {
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
+    height: 100svh;
+    height: 100dvh;
   }
 
   .sidebar {
@@ -392,7 +430,16 @@ button {
   .topbar {
     align-items: stretch;
     flex-direction: column;
-    padding: 1rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .topbar h1 {
+    font-size: 1.1rem;
+  }
+
+  .topbar p {
+    font-size: 0.82rem;
   }
 
   .settings {
@@ -426,6 +473,7 @@ button {
   .composer {
     width: calc(100% - 1rem);
     grid-template-columns: 1fr;
+    margin-bottom: calc(0.5rem + env(safe-area-inset-bottom));
   }
 
   .composer-actions {
