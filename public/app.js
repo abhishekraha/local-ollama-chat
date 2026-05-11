@@ -2,7 +2,7 @@ const STORAGE_KEY = "ollama-chat-sessions-v1";
 const LEGACY_STORAGE_KEY = "qwen-chat-sessions-v1";
 const APP_VERSION = "20260511-6";
 const MODEL_REFRESH_MS = 5000;
-const FALLBACK_MODEL = "deepseek-coder:6.7b";
+const FALLBACK_MODEL = "qwen2.5-coder:7b";
 
 const messagesEl = document.querySelector("#messages");
 const promptInput = document.querySelector("#promptInput");

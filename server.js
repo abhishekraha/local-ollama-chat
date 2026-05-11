@@ -7,7 +7,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(__dirname, "public");
 const port = Number(process.env.PORT || 3000);
 const ollamaHost = (process.env.OLLAMA_HOST || "http://localhost:11434").replace(/\/$/, "");
-const defaultModel = process.env.OLLAMA_MODEL || "deepseek-coder:6.7b";
+const defaultModel = process.env.OLLAMA_MODEL || "qwen2.5-coder:7b";
 const allowedModels = (process.env.OLLAMA_MODELS || "")
   .split(",")
   .map((model) => model.trim())

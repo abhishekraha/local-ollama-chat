@@ -14,7 +14,7 @@ If you are starting a fresh Ollama container:
 
 ```powershell
 docker run -d --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
-docker exec -it ollama ollama pull deepseek-coder:6.7b
+docker exec -it ollama ollama pull qwen2.5-coder:7b
 ```
 
 ## Start the chat app with Docker
@@ -102,18 +102,18 @@ ollama:
 The first run will take a while because this sample stack downloads:
 
 ```text
-deepseek-coder:6.7b
+qwen2.5-coder:7b
 ```
 
-The setup job also removes any other installed Ollama models from the stack volume so only `deepseek-coder:6.7b` remains.
+The setup job also removes any other installed Ollama models from the stack volume so only `qwen2.5-coder:7b` remains.
 
 After the pulls finish, the setup container also runs:
 
 ```powershell
-ollama run deepseek-coder:6.7b "Reply with OK only."
+ollama run qwen2.5-coder:7b "Reply with OK only."
 ```
 
-That pre-warms the default model before the chat app starts. Because `OLLAMA_MAX_LOADED_MODELS=1`, only the most recently used model is kept loaded, so the stack warms `deepseek-coder:6.7b` last.
+That pre-warms the default model before the chat app starts. Because `OLLAMA_MAX_LOADED_MODELS=1`, only the most recently used model is kept loaded, so the stack warms `qwen2.5-coder:7b` last.
 
 Open:
 
@@ -155,14 +155,14 @@ The app defaults to:
 
 ```text
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=deepseek-coder:6.7b
+OLLAMA_MODEL=qwen2.5-coder:7b
 PORT=3000
 ```
 
 To limit which installed Ollama models appear in the UI dropdown, set `OLLAMA_MODELS` to a comma-separated allow-list:
 
 ```text
-OLLAMA_MODELS=deepseek-coder:6.7b
+OLLAMA_MODELS=qwen2.5-coder:7b
 ```
 
 This only filters the UI list. It does not delete models from the Ollama volume.
@@ -187,7 +187,7 @@ Override them when needed:
 
 ```powershell
 $env:OLLAMA_HOST="http://localhost:11434"
-$env:OLLAMA_MODEL="deepseek-coder:6.7b"
+$env:OLLAMA_MODEL="qwen2.5-coder:7b"
 $env:PORT="3000"
 node server.js
 ```
